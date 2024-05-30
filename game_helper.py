@@ -3,7 +3,7 @@ from game import Scene
 from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy
 from objects import Platform
 from mathematics_funcs import img_multiplication
-from working_with_files import clear_directory
+from working_with_files import clear_directory, check_directory
 
 
 class Helper:
@@ -170,6 +170,7 @@ class Helper:
 
     @staticmethod
     def create_platform(platform_x, platform_y, size):
+        check_directory()
         base_platform_path = 'images/jungle_platform.png'
         final_platform_path = f'images/dynamic/jungle_platform_{size}.png'
         img_multiplication(base_platform_path, final_platform_path, size)
