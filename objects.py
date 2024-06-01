@@ -242,6 +242,16 @@ class FireBall(VisibleObject):
             position_status = False
         return position_status
 
+    def explode(self):
+        self.trajectory = (0, 0)
+        self.current_animation_lst_ind = 1
+        self.current_animation_ind = 0
+
+    def get_rect(self):
+        fireball_coordinates = self.get_coordinates()
+        rect_coordinates = (fireball_coordinates[0] + 16, fireball_coordinates[1] + 12)
+        return pygame.Rect(rect_coordinates, (16, 12))
+
 
 class TextBoxCreator:
     @staticmethod
