@@ -1,4 +1,5 @@
 import pygame
+from mathematical_funcs import trajectory_calculate
 
 
 class Object:
@@ -159,7 +160,6 @@ class Player(VisibleObject):
 
 
 class Enemy(VisibleObject):
-    # def __init__(self, x, y, max_animation_cnt: int, lst_of_animation_lst: list[...], x_speed: int = 8, y_speed: int = 6):
     def __init__(self, x, y, max_animation_cnt: int, lst_of_animation_lst: list[...], x_speed: int = 4, y_speed: int = 3):
         super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
         self.animation_cnt = 0
@@ -224,6 +224,23 @@ class Platform(VisibleObject):
 
     def get_rect(self):
         return self.rect
+
+
+class FireBall(VisibleObject):
+    def __init__(self, x, y, max_animation_cnt, lst_of_animation_lst, mouse_position, speed: int = 10):
+        super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
+        self.speed = speed
+        self.trajectory = trajectory_calculate(self.get_coordinates(), mouse_position, self.speed)
+
+    def move(self):
+        self.x += self.trajectory[0]
+        self.y += self.trajectory[1]
+
+    def check_position(self):
+        position_status = True
+        if self.x < 0 or self.x > 1024 or self.y < 0 or self.y > 768:
+            position_status = False
+        return position_status
 
 
 class TextBoxCreator:

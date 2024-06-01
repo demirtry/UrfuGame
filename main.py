@@ -28,6 +28,7 @@ class Level1(Level):
         self.player = player
         self.platforms = platforms
         self.enemies = enemies
+        self.fireballs = []
         self.pause = False
         self.bfs = BreadthFirstSearch(self.platforms)
         self.bfs_cooldown = bfs_cooldown
@@ -104,7 +105,22 @@ class Level1(Level):
                 # print('You die')
                 break
 
-        # print(collide_status)
+    def shoot(self):
+        fireball = Helper.create_fireball(self.player)
+        self.scene.append_obj(fireball)
+        self.fireballs.append(fireball)
+
+    def move_fireballs(self):
+        updated_fireballs = []
+        for fireball in self.fireballs:
+            fireball.move()
+
+            if fireball.check_position():
+                updated_fireballs.append(fireball)
+            else:
+                self.scene.remove_obj(fireball)
+
+        self.fireballs = updated_fireballs
 
     def move_enemies(self):
         for enemy in self.enemies:
@@ -128,6 +144,8 @@ class Level1(Level):
                     my_game.current_level.switch_level_running()
                     my_game.paused_level = self
                     my_game.switch_current_level(LevelCreator.create_pause_lvl(self.scene))
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.shoot()
             keys = pygame.key.get_pressed()
             if ((keys[pygame.K_SPACE] and not self.player.jump) or self.player.jump) and not self.player.fall:
                 self.player.make_jump(self.collide_up())
@@ -141,6 +159,7 @@ class Level1(Level):
             else:
                 self.player.become_idle()
 
+            self.move_fireballs()
             self.move_enemies()
             self.collide_with_enemies()
 
