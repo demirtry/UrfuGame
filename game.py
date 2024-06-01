@@ -21,6 +21,9 @@ class Scene:
                 obj.change_animation_ind()
         pygame.display.update()
 
+    def remove_obj(self, obj):
+        self.obj_lst.remove(obj)
+
 
 class Level:
     def __init__(self, scene: Scene):

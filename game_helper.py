@@ -1,8 +1,8 @@
 import pygame
 from game import Scene
-from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy
+from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall
 from objects import Platform
-from mathematics_funcs import img_multiplication
+from mathematical_funcs import img_multiplication, degree_calculation, img_rotation
 from working_with_files import clear_directory, check_directory
 
 
@@ -28,10 +28,6 @@ class Helper:
         # player between platforms
         base_player_x = 320 + 32 - 9
         base_player_y = 720 + 24 - 70
-
-        # (player_coordinates[0] + 9, player_coordinates[1] - 2)
-        # Helper.create_platform(320, 720, 1),
-        # Helper.create_platform(384, 720, 1),
 
         player_idle_left = [
             pygame.image.load('images/player_images/idle/left/player_idle1_left.png').convert_alpha(),
@@ -122,8 +118,6 @@ class Helper:
         ]
 
         enemies = [
-            # Helper.create_enemy(320+32-19, 720-12)
-            # Helper.create_enemy(320+32-19+32*4, 720-12-24*3)
             Helper.create_enemy(320+32-19+32*4, 720-24*3),
             Helper.create_enemy(320+32-19-32*4, 720-24*8)
         ]
@@ -211,3 +205,19 @@ class Helper:
         enemy = Enemy(enemy_x, enemy_y, 8, [enemy_walk_left, enemy_walk_right])
 
         return enemy
+
+    @staticmethod
+    def create_fireball(player: Player):
+        start_coordinates = player.get_coordinates()
+        fireball_coordinates = (start_coordinates[0], start_coordinates[1] + 24)
+        degree_coordinates = (start_coordinates[0] + 25, start_coordinates[1] + 35)
+        # start_coordinates2 = player.get_rect().size
+
+        # player_coordinates = player.get_coordinates()
+        # start_coordinates = (player_coordinates[0] + 9, player_coordinates[1] - 2)
+
+        mouse_position = pygame.mouse.get_pos()
+        degree = degree_calculation(degree_coordinates, mouse_position)
+        fireball_img = img_rotation('images/fireball_images/fireball_fly_right1.png', degree)
+        fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], 1, [[fireball_img]], mouse_position)
+        return fireball
