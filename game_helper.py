@@ -208,16 +208,25 @@ class Helper:
 
     @staticmethod
     def create_fireball(player: Player):
+
         start_coordinates = player.get_coordinates()
         fireball_coordinates = (start_coordinates[0], start_coordinates[1] + 24)
         degree_coordinates = (start_coordinates[0] + 25, start_coordinates[1] + 35)
-        # start_coordinates2 = player.get_rect().size
-
-        # player_coordinates = player.get_coordinates()
-        # start_coordinates = (player_coordinates[0] + 9, player_coordinates[1] - 2)
 
         mouse_position = pygame.mouse.get_pos()
         degree = degree_calculation(degree_coordinates, mouse_position)
-        fireball_img = img_rotation('images/fireball_images/fireball_fly_right1.png', degree)
-        fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], 1, [[fireball_img]], mouse_position)
+
+        fireball_img_up = img_rotation('images/fireball_images/base_fireball_up.png', degree)
+        fireball_img_down = img_rotation('images/fireball_images/base_fireball_down.png', degree)
+
+        fireball_movement = [fireball_img_up, fireball_img_down, fireball_img_up, fireball_img_up]
+
+        fireball_explosion = [
+            pygame.image.load('images/fireball_images/fireball_boom1.png'),
+            pygame.image.load('images/fireball_images/fireball_boom2.png'),
+            pygame.image.load('images/fireball_images/fireball_boom3.png'),
+            pygame.image.load('images/fireball_images/fireball_boom4.png')
+        ]
+
+        fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], 4, [fireball_movement, fireball_explosion], mouse_position)
         return fireball

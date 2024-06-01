@@ -122,6 +122,35 @@ class Level1(Level):
 
         self.fireballs = updated_fireballs
 
+    def collide_fireballs(self):
+        updated_fireballs = []
+        for fireball in self.fireballs:
+            if not fireball.current_animation_lst_ind:
+                collide_status = False
+                fireball_rect = fireball.get_rect()
+                for platform in self.platforms:
+                    if pygame.Rect.colliderect(fireball_rect, platform.get_rect()):
+                        collide_status = True
+                        break
+
+                if not collide_status:
+                    for enemy in self.enemies:
+                        if pygame.Rect.colliderect(fireball_rect, enemy.get_rect()):
+                            collide_status = True
+                            self.enemies.remove(enemy)
+                            self.scene.remove_obj(enemy)
+                            break
+
+                updated_fireballs.append(fireball)
+                if collide_status:
+                    fireball.explode()
+            else:
+                if fireball.current_animation_ind != 3:
+                    updated_fireballs.append(fireball)
+                else:
+                    self.scene.remove_obj(fireball)
+        self.fireballs = updated_fireballs
+
     def move_enemies(self):
         for enemy in self.enemies:
             if not enemy.current_bfs_index:
@@ -162,6 +191,7 @@ class Level1(Level):
             self.move_fireballs()
             self.move_enemies()
             self.collide_with_enemies()
+            self.collide_fireballs()
 
             clock.tick(15)
 
