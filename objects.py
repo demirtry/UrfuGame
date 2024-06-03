@@ -97,25 +97,6 @@ class Player(VisibleObject):
 
             self.current_cnt_steps = self.cnt_steps_to_run
 
-    # def move_right(self, collide_status):
-    #     last_turn = self.turn
-    #     self.turn = True
-    #     # self.current_animation_lst_ind = 3
-    #     if last_turn != self.turn:
-    #         self.current_animation_ind = 0
-    #     if self.x < 1024 - 9 - 32 - self.speed and not collide_status:
-    #         self.x += self.speed
-
-    # def move_left(self, collide_status):
-    #     last_turn = self.turn
-    #     self.turn = False
-    #     self.current_animation_lst_ind = 4
-    #     # self.current_animation_lst_ind = 2
-    #     if last_turn != self.turn:
-    #         self.current_animation_ind = 0
-    #     if self.x > self.speed - 9 and not collide_status:
-    #         self.x -= self.speed
-
     def make_jump(self, collide_up):
         if not collide_up and self.jump_count > 0:
             self.jump = True
@@ -160,7 +141,7 @@ class Player(VisibleObject):
 
 
 class Enemy(VisibleObject):
-    def __init__(self, x, y, max_animation_cnt: int, lst_of_animation_lst: list[...], x_speed: int = 4, y_speed: int = 3):
+    def __init__(self, x, y, max_animation_cnt: int, lst_of_animation_lst: list[...], turn: bool = False, x_speed: int = 4, y_speed: int = 3):
         super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
         self.animation_cnt = 0
         self.max_animation_cnt = max_animation_cnt
@@ -168,6 +149,8 @@ class Enemy(VisibleObject):
         self.y_speed = y_speed
         self.current_bfs_index = 0
         self.current_action = None
+        if turn:
+            self.current_animation_lst_ind = 1
 
     def get_rect(self):
         enemy_coordinates = self.get_coordinates()
@@ -215,6 +198,33 @@ class Button(VisibleObject):
     def to_base_condition(self):
         self.current = False
         self.current_animation_lst_ind = 0
+
+
+class ScoreCounter(VisibleObject):
+    def __init__(self, x, y):
+        self.score = 0
+        self.update_image()
+        super().__init__(x, y, 1, self.lst_of_animation_lst)
+
+    def update_text(self):
+        return f'Score:  {self.score}'
+
+    def update_score(self):
+        self.score += 10
+
+    def update_image(self):
+
+        if 100 > self.score > 0:
+            self.x = 860
+        elif 100 <= self.score < 1000:
+            self.x = 853
+
+        updated_img = TextBoxCreator.create_text_img('arial', self.update_text(), 35, (31, 87, 161))
+        self.lst_of_animation_lst = [[updated_img]]
+
+    def calculate(self):
+        self.update_score()
+        self.update_image()
 
 
 class Platform(VisibleObject):

@@ -1,15 +1,15 @@
 import pygame
 from game import Game, Scene, Level, LevelWithButtons
 from game_helper import Helper
-from objects import Player, Platform, Enemy, Button
+from objects import Player, Platform, Button, ScoreCounter
 from BFS import BreadthFirstSearch
 
 
 class LevelCreator:
     @staticmethod
     def create_lvl1():
-        scene, player, platforms, enemies = Helper.create_level1_objects()
-        return Level1(scene, player, platforms, enemies)
+        scene, player, score_counter, platforms = Helper.create_level1_objects()
+        return Level1(scene, player, score_counter, platforms)
 
     @staticmethod
     def create_menu_lvl():
@@ -22,16 +22,18 @@ class LevelCreator:
 
 
 class Level1(Level):
-    def __init__(self, scene: Scene, player: Player, platforms: list[Platform], enemies: list[Enemy],
+    def __init__(self, scene: Scene, player: Player, score_counter: ScoreCounter, platforms: list[Platform],
                  bfs_cooldown: int = 4):
         super().__init__(scene)
         self.player = player
+        self.score_counter = score_counter
         self.platforms = platforms
-        self.enemies = enemies
+        self.enemies = []
         self.fireballs = []
         self.pause = False
         self.bfs = BreadthFirstSearch(self.platforms)
         self.bfs_cooldown = bfs_cooldown
+        self.enemy_timer_count = 0
 
     def collide(self, key):
         collide_status = False
@@ -139,6 +141,7 @@ class Level1(Level):
                             collide_status = True
                             self.enemies.remove(enemy)
                             self.scene.remove_obj(enemy)
+                            self.score_counter.calculate()
                             break
 
                 updated_fireballs.append(fireball)
@@ -160,7 +163,16 @@ class Level1(Level):
             enemy.move(enemy.current_action)
             enemy.current_bfs_index -= 1
 
+    def spawn_enemy(self):
+        enemy = Helper.create_enemy(self.bfs.tiles, self.player)
+        self.enemies.append(enemy)
+        self.scene.append_obj(enemy)
+
     def run(self):
+
+        enemy_timer = pygame.USEREVENT + 1
+        pygame.time.set_timer(enemy_timer, 3000 - self.enemy_timer_count * 30)
+
         while self.get_level_running():
             my_game.draw(self.pause)
             for event in pygame.event.get():
@@ -175,6 +187,13 @@ class Level1(Level):
                     my_game.switch_current_level(LevelCreator.create_pause_lvl(self.scene))
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.shoot()
+
+                if event.type == enemy_timer:
+                    self.spawn_enemy()
+                    if 3000 - self.enemy_timer_count * 10 > 1030:
+                        pygame.time.set_timer(enemy_timer, 3000 - self.enemy_timer_count * 30)
+                        self.enemy_timer_count += 1
+
             keys = pygame.key.get_pressed()
             if ((keys[pygame.K_SPACE] and not self.player.jump) or self.player.jump) and not self.player.fall:
                 self.player.make_jump(self.collide_up())
