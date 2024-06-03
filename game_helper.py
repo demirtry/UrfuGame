@@ -1,9 +1,9 @@
 import pygame
 from game import Scene
-from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall
-from objects import Platform
+from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter
 from mathematical_funcs import img_multiplication, degree_calculation, img_rotation
 from working_with_files import clear_directory, check_directory
+import random
 
 
 class Helper:
@@ -101,6 +101,16 @@ class Helper:
         return start_player
 
     @staticmethod
+    def create_score_counter_objects():
+
+        score_bg_img = pygame.image.load('images/jungle_counter_bg.png')
+        score_bg_obj = VisibleObject(830, 0, 1, [[score_bg_img]])
+
+        score_counter = ScoreCounter(870, 25)
+
+        return score_bg_obj, score_counter
+
+    @staticmethod
     def create_level1_objects(player: Player = None):
         if player is None:
             player = Helper.create_player()
@@ -117,17 +127,13 @@ class Helper:
             Helper.create_platform(384, 720, 1),
         ]
 
-        enemies = [
-            Helper.create_enemy(320+32-19+32*4, 720-24*3),
-            Helper.create_enemy(320+32-19-32*4, 720-24*8)
-        ]
+        score_bg_obj, score_counter = Helper.create_score_counter_objects()
 
-        scene = Scene(Helper.screen, Helper.create_level1_bg(), player)
+        scene = Scene(Helper.screen, Helper.create_level1_bg(), player, score_bg_obj, score_counter)
 
         scene.append_obj(*platforms)
-        scene.append_obj(*enemies)
 
-        return scene, player, platforms, enemies
+        return scene, player, score_counter, platforms
 
     @staticmethod
     def create_menu_scene():
@@ -178,7 +184,43 @@ class Helper:
         return Helper.create_platform(0, 744, 32)
 
     @staticmethod
-    def create_enemy(enemy_x, enemy_y):
+    def create_enemy(tiles, player):
+
+        enemy_possible_tiles = [
+            tiles[0, :],
+            tiles[:, 0],
+            tiles[:, 31]
+        ]
+
+        current_location_index = random.randint(0, 2)
+        current_location = enemy_possible_tiles[current_location_index]
+
+        enemy_turn = False
+
+        if current_location_index:
+            while True:
+                selected_tile_row_index = random.randint(0, len(current_location) - 1)
+                if not current_location[selected_tile_row_index]:
+                    break
+
+            if current_location_index == 2:
+                selected_tile_column_index = 31
+            else:
+                enemy_turn = True
+                selected_tile_column_index = 0
+
+        else:
+            while True:
+                selected_tile_column_index = random.randint(0, len(current_location) - 1)
+                if not current_location[selected_tile_column_index]:
+                    if selected_tile_column_index < 15:
+                        enemy_turn = True
+                    break
+
+            selected_tile_row_index = 0
+
+        enemy_x = selected_tile_column_index * 32 - 19
+        enemy_y = selected_tile_row_index * 24 - 24
 
         enemy_walk_left = [
             pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_3.png').convert_alpha(),
@@ -202,7 +244,7 @@ class Helper:
             pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_2.png').convert_alpha()
         ]
 
-        enemy = Enemy(enemy_x, enemy_y, 8, [enemy_walk_left, enemy_walk_right])
+        enemy = Enemy(enemy_x, enemy_y, 8, [enemy_walk_left, enemy_walk_right], enemy_turn)
 
         return enemy
 
