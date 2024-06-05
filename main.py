@@ -13,12 +13,17 @@ class LevelCreator:
 
     @staticmethod
     def create_menu_lvl():
-        menu_scene, buttons = Helper.create_menu_scene()
-        return Menu(menu_scene, buttons)
+        menu_scene, menu_buttons = Helper.create_menu_scene()
+        return Menu(menu_scene, menu_buttons)
 
     @staticmethod
     def create_pause_lvl(scene: Scene):
         return Pause(scene)
+
+    @staticmethod
+    def create_game_over_lvl(score_counter: ScoreCounter, record_status):
+        game_over_scene, game_over_buttons = Helper.create_game_over_objects(score_counter, record_status)
+        return GameOver(game_over_scene, game_over_buttons)
 
 
 class Level1(Level):
@@ -104,8 +109,9 @@ class Level1(Level):
         for enemy in self.enemies:
             if pygame.Rect.colliderect(player_rect, enemy.get_rect()):
                 collide_status = True
-                print('You die')
                 break
+
+        return collide_status
 
     def shoot(self):
         fireball = Helper.create_fireball(self.player)
@@ -209,8 +215,11 @@ class Level1(Level):
 
             self.move_fireballs()
             self.move_enemies()
-            self.collide_with_enemies()
             self.collide_fireballs()
+
+            if self.collide_with_enemies():
+                my_game.current_level.switch_level_running()
+                my_game.switch_current_level(LevelCreator.create_game_over_lvl(self.score_counter, my_game.update_score_record(self.score_counter.score)))
 
             clock.tick(15)
 
@@ -265,6 +274,39 @@ class Pause(LevelWithButtons):
     def run(self):
         while self.get_level_running():
             my_game.draw(pause=True)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    my_game.quit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                    self.to_play()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.current_button_index is not None:
+                    self.buttons_callbacks[self.current_button_index]()
+                elif event.type == pygame.KEYDOWN and (event.key == pygame.K_w or event.key == pygame.K_s):
+                    self.switch_button(event.key)
+
+            clock.tick(15)
+
+
+class GameOver(LevelWithButtons):
+    def __init__(self, scene: Scene, buttons: list[Button]):
+        super().__init__(scene)
+        self.buttons = buttons
+        self.current_button_index = None
+        self.buttons_callbacks = [self.to_play, self.to_menu]
+
+    @staticmethod
+    def to_play():
+        my_game.current_level.switch_level_running()
+        my_game.switch_current_level(LevelCreator.create_lvl1())
+
+    @staticmethod
+    def to_menu():
+        my_game.current_level.switch_level_running()
+        my_game.switch_current_level(LevelCreator.create_menu_lvl())
+
+    def run(self):
+        while self.get_level_running():
+            my_game.draw()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     my_game.quit()

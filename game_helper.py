@@ -167,8 +167,13 @@ class Helper:
         for obj in pause.scene.obj_lst:
             new_scene.append_obj(obj)
         pause.update_scene(new_scene)
+
+        # pause_scene_img = pygame.image.load('images/backgrounds/game_over_bg.jpg').convert()
+        # pause_scene_obj = VisibleObject(0, 0, [[pause_scene_img]])
+
         pause_scene_img = pygame.image.load('images/backgrounds/pause.jpg').convert()
         pause_scene_obj = VisibleObject(128, 96, [[pause_scene_img]])
+
         pause_head_img = TextBoxCreator.create_text_img('arial', 'Игра на паузе', 50, (12, 127, 145))
         pause_head_obj = VisibleObject(512 - 266 // 2, 210, [[pause_head_img]])
         pause_btn1 = Button(512 - 237 // 2, 320, 'arial', 'Продолжить', 50, (152, 13, 243), (206, 31, 107))
@@ -246,3 +251,33 @@ class Helper:
 
         fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], [fireball_movement, fireball_explosion], mouse_position)
         return fireball
+
+    @staticmethod
+    def create_game_over_objects(score_counter: ScoreCounter, record_status):
+
+        game_over_picture = pygame.image.load('images/backgrounds/game_over_bg.jpg').convert()
+        game_over_bg_obj = VisibleObject(0, 0, [[game_over_picture]])
+
+        game_over_center_img = pygame.image.load('images/backgrounds/game_over_bg_2.jpg').convert()
+        game_over_center_obj = VisibleObject(312, 110, [[game_over_center_img]])
+
+        game_over_head_img = TextBoxCreator.create_text_img('arial', 'Game over!', 60, (115, 209, 209))
+        game_over_head_obj = VisibleObject(512 - 256 // 2, 150, [[game_over_head_img]])
+
+        score_img = TextBoxCreator.create_text_img('arial', score_counter.update_text(), 35, (255, 255, 255))
+        score_obj_x = 512 - score_img.get_rect().size[0] // 2
+        score_obj = VisibleObject(score_obj_x, 240, [[score_img]])
+
+        game_over_btn1 = Button(512 - 252//2, 400, 'arial', 'Играть снова', 50, (255, 255, 255), (58, 85, 201))
+        game_over_btn2 = Button(512 - 272//2, 500, 'arial', 'Выйти в меню', 50, (255, 255, 255), (58, 85, 201))
+
+        game_over_scene = Scene(Helper.screen, game_over_bg_obj, game_over_center_obj, game_over_head_obj, score_obj, game_over_btn1, game_over_btn2)
+
+        if record_status:
+            score_record_head = TextBoxCreator.create_text_img('arial', 'New record!', 35, (115, 209, 209))
+            score_record_head_obj = VisibleObject(512 - 156 // 2, 315, [[score_record_head]])
+            game_over_scene.append_obj(score_record_head_obj)
+
+        buttons = [game_over_btn1, game_over_btn2]
+
+        return game_over_scene, buttons

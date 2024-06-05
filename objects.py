@@ -58,11 +58,15 @@ class Player(VisibleObject):
             self.current_animation_ind = 0
 
         if not self.current_cnt_steps:
+            last_current_animation_lst_ind = self.current_animation_lst_ind
             self.current_animation_lst_ind = 5
-            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+            if last_current_animation_lst_ind != self.current_animation_lst_ind:
+                self.current_animation_ind = 0
         else:
             self.current_animation_lst_ind = 3
-            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+
+        self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+        self.current_animation_ind = min(self.current_animation_ind, self.max_animation_cnt - 1)
 
         if self.x < 1024 - 9 - 32 - self.speed and not collide_status:
 
@@ -83,11 +87,15 @@ class Player(VisibleObject):
             self.current_animation_ind = 0
 
         if not self.current_cnt_steps:
+            last_current_animation_lst_ind = self.current_animation_lst_ind
             self.current_animation_lst_ind = 4
-            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+            if last_current_animation_lst_ind != self.current_animation_lst_ind:
+                self.current_animation_ind = 0
         else:
             self.current_animation_lst_ind = 2
-            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+
+        self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
+        self.current_animation_ind = min(self.current_animation_ind, self.max_animation_cnt - 1)
 
         if self.x > self.speed - 9 and not collide_status:
 
@@ -120,10 +128,13 @@ class Player(VisibleObject):
     def become_idle(self):
         last_current_animation_lst_ind = self.current_animation_lst_ind
         self.current_cnt_steps = self.cnt_steps_to_run
+
         if self.turn:
             self.current_animation_lst_ind = 1
         else:
             self.current_animation_lst_ind = 0
+
+        self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
         if last_current_animation_lst_ind != self.current_animation_lst_ind:
             self.current_animation_ind = 0
 
