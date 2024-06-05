@@ -88,6 +88,7 @@ class Game:
         self.current_level = current_level
         self.screen = screen
         self.paused_level = None
+        self.score_record = 0
 
     def draw(self, pause: bool = False):
         self.current_level.scene.draw_obj(pause)
@@ -104,3 +105,11 @@ class Game:
     def quit(self):
         self.current_level.switch_level_running()
         self.switch_current_level()
+
+    def update_score_record(self, score):
+        record_status = False
+        if score > self.score_record:
+            self.score_record = score
+            record_status = True
+
+        return record_status
