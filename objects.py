@@ -13,12 +13,12 @@ class Object:
 
 
 class VisibleObject(Object):
-    def __init__(self, x, y, max_animation_cnt, lst_of_animation_lst):
+    def __init__(self, x, y, lst_of_animation_lst):
         super().__init__(x, y)
-        self.max_animation_cnt = max_animation_cnt
         self.lst_of_animation_lst = lst_of_animation_lst
         self.current_animation_lst_ind = 0
         self.current_animation_ind = 0
+        self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
 
     def get_current_animation(self):
         return self.lst_of_animation_lst[self.current_animation_lst_ind][self.current_animation_ind]
@@ -37,10 +37,9 @@ class VisibleObject(Object):
 
 
 class Player(VisibleObject):
-    def __init__(self, x: int, y: int, max_animation_cnt: int, lst_of_animation_lst, jump_size: int = 9, speed: int = 8, cnt_steps_to_run: int = 20):
-        super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
+    def __init__(self, x: int, y: int, lst_of_animation_lst, jump_size: int = 9, speed: int = 8, cnt_steps_to_run: int = 20):
+        super().__init__(x, y, lst_of_animation_lst)
         self.animation_cnt = 0
-        self.max_animation_cnt = max_animation_cnt
         self.turn = False
         self.jump = False
         self.fall = False
@@ -60,8 +59,10 @@ class Player(VisibleObject):
 
         if not self.current_cnt_steps:
             self.current_animation_lst_ind = 5
+            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
         else:
             self.current_animation_lst_ind = 3
+            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
 
         if self.x < 1024 - 9 - 32 - self.speed and not collide_status:
 
@@ -83,8 +84,10 @@ class Player(VisibleObject):
 
         if not self.current_cnt_steps:
             self.current_animation_lst_ind = 4
+            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
         else:
             self.current_animation_lst_ind = 2
+            self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
 
         if self.x > self.speed - 9 and not collide_status:
 
@@ -141,10 +144,10 @@ class Player(VisibleObject):
 
 
 class Enemy(VisibleObject):
-    def __init__(self, x, y, max_animation_cnt: int, lst_of_animation_lst: list[...], turn: bool = False, x_speed: int = 4, y_speed: int = 3):
-        super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
+    def __init__(self, x, y, lst_of_animation_lst: list[...], turn: bool = False, x_speed: int = 4, y_speed: int = 3):
+        super().__init__(x, y, lst_of_animation_lst)
         self.animation_cnt = 0
-        self.max_animation_cnt = max_animation_cnt
+        self.max_animation_cnt = len(lst_of_animation_lst[self.current_animation_lst_ind])
         self.x_speed = x_speed
         self.y_speed = y_speed
         self.current_bfs_index = 0
@@ -188,7 +191,7 @@ class Button(VisibleObject):
     def __init__(self, x, y, font_name, text, text_size, base_color, current_color):
         base_btn_img = TextBoxCreator.create_text_img(font_name, text, text_size, base_color)
         current_btn_img = TextBoxCreator.create_text_img(font_name, text, text_size, current_color)
-        super().__init__(x, y, 1, [[base_btn_img], [current_btn_img]])
+        super().__init__(x, y, [[base_btn_img], [current_btn_img]])
         self.current = False
 
     def select(self):
@@ -204,7 +207,7 @@ class ScoreCounter(VisibleObject):
     def __init__(self, x, y):
         self.score = 0
         self.update_image()
-        super().__init__(x, y, 1, self.lst_of_animation_lst)
+        super().__init__(x, y, self.lst_of_animation_lst)
 
     def update_text(self):
         return f'Score:  {self.score}'
@@ -228,8 +231,8 @@ class ScoreCounter(VisibleObject):
 
 
 class Platform(VisibleObject):
-    def __init__(self, x, y, max_animation_cnt, lst_of_animation_lst):
-        super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
+    def __init__(self, x, y, lst_of_animation_lst):
+        super().__init__(x, y, lst_of_animation_lst)
         self.rect = self.get_current_animation().get_rect(topleft=self.get_coordinates())
 
     def get_rect(self):
@@ -237,8 +240,8 @@ class Platform(VisibleObject):
 
 
 class FireBall(VisibleObject):
-    def __init__(self, x, y, max_animation_cnt, lst_of_animation_lst, mouse_position, speed: int = 10):
-        super().__init__(x, y, max_animation_cnt, lst_of_animation_lst)
+    def __init__(self, x, y, lst_of_animation_lst, mouse_position, speed: int = 10):
+        super().__init__(x, y, lst_of_animation_lst)
         self.speed = speed
         self.trajectory = trajectory_calculate(self.get_coordinates(), mouse_position, self.speed)
 

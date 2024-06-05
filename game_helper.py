@@ -1,9 +1,8 @@
 import pygame
 from game import Scene
 from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter
-from mathematical_funcs import img_multiplication, degree_calculation, img_rotation
+from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position
 from working_with_files import clear_directory, check_directory
-import random
 
 
 class Helper:
@@ -15,7 +14,7 @@ class Helper:
         start_background_x = -188
         start_background_y = -165
         background_picture = pygame.image.load('images/backgrounds/background_gameplay.png')
-        bg = VisibleObject(start_background_x, start_background_y, 1, [[background_picture]])
+        bg = VisibleObject(start_background_x, start_background_y, [[background_picture]])
 
         return bg
 
@@ -96,7 +95,7 @@ class Helper:
         player_lst_of_anim_lst = [player_idle_left, player_idle_right, player_walk_left,
                                   player_walk_right, player_run_left, player_run_right]
 
-        start_player = Player(base_player_x, base_player_y, 7, player_lst_of_anim_lst)
+        start_player = Player(base_player_x, base_player_y, player_lst_of_anim_lst)
 
         return start_player
 
@@ -104,7 +103,7 @@ class Helper:
     def create_score_counter_objects():
 
         score_bg_img = pygame.image.load('images/jungle_counter_bg.png')
-        score_bg_obj = VisibleObject(830, 0, 1, [[score_bg_img]])
+        score_bg_obj = VisibleObject(830, 0, [[score_bg_img]])
 
         score_counter = ScoreCounter(870, 25)
 
@@ -115,16 +114,26 @@ class Helper:
         if player is None:
             player = Helper.create_player()
 
+        # platforms = [
+        #     Helper.create_platform(96, 648, 5),
+        #     Helper.create_platform(256, 552, 5),
+        #     Helper.create_platform(384, 432, 3),
+        #     Helper.create_ground_platform(),
+        #     Helper.create_platform(96, 720, 1),
+        #     Helper.create_platform(96, 696, 1),
+        #     Helper.create_platform(96, 672, 1),
+        #     Helper.create_platform(320, 720, 1),
+        #     Helper.create_platform(384, 720, 1),
+        # ]
+
         platforms = [
+            Helper.create_ground_platform(),
             Helper.create_platform(96, 648, 5),
             Helper.create_platform(256, 552, 5),
             Helper.create_platform(384, 432, 3),
-            Helper.create_ground_platform(),
-            Helper.create_platform(96, 720, 1),
-            Helper.create_platform(96, 696, 1),
-            Helper.create_platform(96, 672, 1),
-            Helper.create_platform(320, 720, 1),
-            Helper.create_platform(384, 720, 1),
+            Helper.create_platform(448, 312, 3),
+            Helper.create_platform(512, 216, 2),
+            Helper.create_platform(384, 168, 2),
         ]
 
         score_bg_obj, score_counter = Helper.create_score_counter_objects()
@@ -145,7 +154,7 @@ class Helper:
         menu_btn3 = Button(512 - 61, 350, 'arial', 'Выйти', 50, (152, 13, 243), (206, 31, 107))
 
         menu_picture = pygame.image.load('images/backgrounds/menu_background2.png').convert()
-        menu_obj = VisibleObject(menu_x, menu_y, 1, [[menu_picture]])
+        menu_obj = VisibleObject(menu_x, menu_y, [[menu_picture]])
 
         menu_scene = Scene(Helper.screen, menu_obj, menu_btn1, menu_btn2, menu_btn3)
         buttons = [menu_btn1, menu_btn2, menu_btn3]
@@ -159,9 +168,9 @@ class Helper:
             new_scene.append_obj(obj)
         pause.update_scene(new_scene)
         pause_scene_img = pygame.image.load('images/backgrounds/pause.jpg').convert()
-        pause_scene_obj = VisibleObject(128, 96, 1, [[pause_scene_img]])
+        pause_scene_obj = VisibleObject(128, 96, [[pause_scene_img]])
         pause_head_img = TextBoxCreator.create_text_img('arial', 'Игра на паузе', 50, (12, 127, 145))
-        pause_head_obj = VisibleObject(512 - 266 // 2, 210, 1, [[pause_head_img]])
+        pause_head_obj = VisibleObject(512 - 266 // 2, 210, [[pause_head_img]])
         pause_btn1 = Button(512 - 237 // 2, 320, 'arial', 'Продолжить', 50, (152, 13, 243), (206, 31, 107))
         pause_btn2 = Button(512 - 272 // 2, 425, 'arial', 'Выйти в меню', 50, (152, 13, 243), (206, 31, 107))
         pause.scene.append_obj(pause_scene_obj, pause_head_obj, pause_btn1, pause_btn2)
@@ -175,7 +184,7 @@ class Helper:
         final_platform_path = f'images/dynamic/jungle_platform_{size}.png'
         img_multiplication(base_platform_path, final_platform_path, size)
         ground_platform_img = pygame.image.load(final_platform_path).convert_alpha()
-        platform_obj = Platform(platform_x, platform_y, 1, [[ground_platform_img]])
+        platform_obj = Platform(platform_x, platform_y, [[ground_platform_img]])
         clear_directory()
         return platform_obj
 
@@ -185,42 +194,6 @@ class Helper:
 
     @staticmethod
     def create_enemy(tiles, player):
-
-        enemy_possible_tiles = [
-            tiles[0, :],
-            tiles[:, 0],
-            tiles[:, 31]
-        ]
-
-        current_location_index = random.randint(0, 2)
-        current_location = enemy_possible_tiles[current_location_index]
-
-        enemy_turn = False
-
-        if current_location_index:
-            while True:
-                selected_tile_row_index = random.randint(0, len(current_location) - 1)
-                if not current_location[selected_tile_row_index]:
-                    break
-
-            if current_location_index == 2:
-                selected_tile_column_index = 31
-            else:
-                enemy_turn = True
-                selected_tile_column_index = 0
-
-        else:
-            while True:
-                selected_tile_column_index = random.randint(0, len(current_location) - 1)
-                if not current_location[selected_tile_column_index]:
-                    if selected_tile_column_index < 15:
-                        enemy_turn = True
-                    break
-
-            selected_tile_row_index = 0
-
-        enemy_x = selected_tile_column_index * 32 - 19
-        enemy_y = selected_tile_row_index * 24 - 24
 
         enemy_walk_left = [
             pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_3.png').convert_alpha(),
@@ -244,7 +217,8 @@ class Helper:
             pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_2.png').convert_alpha()
         ]
 
-        enemy = Enemy(enemy_x, enemy_y, 8, [enemy_walk_left, enemy_walk_right], enemy_turn)
+        enemy_x, enemy_y, enemy_turn = generate_enemy_position(tiles, player)
+        enemy = Enemy(enemy_x, enemy_y, [enemy_walk_left, enemy_walk_right], enemy_turn)
 
         return enemy
 
@@ -270,5 +244,5 @@ class Helper:
             pygame.image.load('images/fireball_images/fireball_boom4.png')
         ]
 
-        fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], 4, [fireball_movement, fireball_explosion], mouse_position)
+        fireball = FireBall(fireball_coordinates[0], fireball_coordinates[1], [fireball_movement, fireball_explosion], mouse_position)
         return fireball
