@@ -71,7 +71,7 @@ class Level1(Level):
                 self.player.y = platform.get_coordinates()[1] + 26
                 collide_status = True
                 break
-        if collide_status:
+        if collide_status or self.player.y <= 2:
             self.player.jump = False
             self.player.jump_count = 0
         else:
@@ -104,7 +104,7 @@ class Level1(Level):
         for enemy in self.enemies:
             if pygame.Rect.colliderect(player_rect, enemy.get_rect()):
                 collide_status = True
-                # print('You die')
+                print('You die')
                 break
 
     def shoot(self):
@@ -190,9 +190,9 @@ class Level1(Level):
 
                 if event.type == enemy_timer:
                     self.spawn_enemy()
-                    if 3000 - self.enemy_timer_count * 10 > 1030:
-                        pygame.time.set_timer(enemy_timer, 3000 - self.enemy_timer_count * 30)
+                    if 3000 - self.enemy_timer_count * 30 > 1030:
                         self.enemy_timer_count += 1
+                    pygame.time.set_timer(enemy_timer, 3000 - self.enemy_timer_count * 30)
 
             keys = pygame.key.get_pressed()
             if ((keys[pygame.K_SPACE] and not self.player.jump) or self.player.jump) and not self.player.fall:

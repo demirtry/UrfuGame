@@ -32,7 +32,6 @@ class BreadthFirstSearch:
 
         if start == end:
             return None
-
         queue = deque([start])
         self.visited = {start:  None}
 
