@@ -9,7 +9,7 @@ class LevelCreator:
     @staticmethod
     def create_lvl1():
         scene, player, score_counter, platforms = Helper.create_level1_objects()
-        return Level1(scene, player, score_counter, platforms)
+        return GameplayLevel(scene, player, score_counter, platforms)
 
     @staticmethod
     def create_menu_lvl():
@@ -26,7 +26,7 @@ class LevelCreator:
         return GameOver(game_over_scene, game_over_buttons)
 
 
-class Level1(Level):
+class GameplayLevel(Level):
     def __init__(self, scene: Scene, player: Player, score_counter: ScoreCounter, platforms: list[Platform],
                  bfs_cooldown: int = 4):
         super().__init__(scene)
@@ -229,7 +229,8 @@ class Menu(LevelWithButtons):
         super().__init__(scene)
         self.buttons = buttons
         self.current_button_index = None
-        self.buttons_callbacks = [self.to_play, self.to_play, self.quit]
+        self.buttons_callbacks = [self.to_play, self.get_load_level_name, self.quit]
+        self.is_loading = False
 
     @staticmethod
     def to_play():
@@ -237,8 +238,28 @@ class Menu(LevelWithButtons):
         my_game.switch_current_level(LevelCreator.create_lvl1())
 
     @staticmethod
+    def load_level(saving_level_name: str):
+        level_to_load = my_game.saved_levels[saving_level_name]
+
+        scene, player, score_counter, platforms = Helper.create_level_copy(level_to_load)
+        copied_level_to_load = GameplayLevel(scene, player, score_counter, platforms)
+        Helper.copy_enemies_and_fireballs(copied_level_to_load, level_to_load)
+
+        my_game.current_level.switch_level_running()
+        my_game.switch_current_level(copied_level_to_load)
+
+    def get_load_level_name(self):
+        self.scene, self.buttons = Helper.create_menu_level_loader_scene(my_game.saved_levels)
+        self.is_loading = True
+
+    @staticmethod
     def quit():
         my_game.quit()
+
+    @staticmethod
+    def to_menu():
+        my_game.current_level.switch_level_running()
+        my_game.switch_current_level(LevelCreator.create_menu_lvl())
 
     def run(self):
         while self.get_level_running():
@@ -246,10 +267,16 @@ class Menu(LevelWithButtons):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     my_game.quit()
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.current_button_index is not None:
-                    self.buttons_callbacks[self.current_button_index]()
                 elif event.type == pygame.KEYDOWN and (event.key == pygame.K_w or event.key == pygame.K_s):
                     self.switch_button(event.key)
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.current_button_index is not None:
+                    if self.is_loading:
+                        if self.current_button_index == len(self.buttons) - 1:
+                            self.to_menu()
+                        else:
+                            self.load_level(self.buttons[self.current_button_index].text)
+                    else:
+                        self.buttons_callbacks[self.current_button_index]()
 
             clock.tick(15)
 
@@ -257,14 +284,36 @@ class Menu(LevelWithButtons):
 class Pause(LevelWithButtons):
     def __init__(self, scene: Scene):
         super().__init__(scene)
-        Helper.turn_scene_to_pause(self)
-        self.buttons_callbacks = [self.to_play, self.to_menu]
+        self.basic_scene = self.scene
+        self.to_pause_menu()
+        self.buttons_callbacks = [self.to_play, self.get_saving_name, self.to_menu]
+        self.is_saving = False
+        self.saving_name_tracker = None
 
     @staticmethod
     def to_play():
         my_game.current_level.switch_level_running()
         my_game.switch_current_level(my_game.paused_level)
         my_game.paused_level = None
+
+    def get_saving_name(self):
+        self.scene = Helper.turn_scene_to_get_saving_name(self.basic_scene)
+        self.is_saving = True
+        self.saving_name_tracker = Helper.create_text_tracker_for_saving_name()
+        self.scene.append_obj(self.saving_name_tracker)
+
+    def save_level(self):
+        scene, player, score_counter, platforms = Helper.create_level_copy(my_game.paused_level)
+        saved_level = GameplayLevel(scene, player, score_counter, platforms)
+        Helper.copy_enemies_and_fireballs(saved_level, my_game.paused_level)
+        my_game.saved_levels.update({self.saving_name_tracker.text: saved_level})
+        # print(my_game.saved_levels)
+
+    def to_pause_menu(self):
+        self.scene = self.basic_scene
+        self.buttons.clear()
+        Helper.turn_scene_to_pause(self)
+        self.is_saving = False
 
     @staticmethod
     def to_menu():
@@ -275,14 +324,28 @@ class Pause(LevelWithButtons):
         while self.get_level_running():
             my_game.draw(pause=True)
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    my_game.quit()
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                    self.to_play()
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.current_button_index is not None:
-                    self.buttons_callbacks[self.current_button_index]()
-                elif event.type == pygame.KEYDOWN and (event.key == pygame.K_w or event.key == pygame.K_s):
-                    self.switch_button(event.key)
+                if self.is_saving:
+                    if event.type == pygame.QUIT:
+                        my_game.quit()
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            self.to_pause_menu()
+                        elif event.key == pygame.K_BACKSPACE:
+                            self.saving_name_tracker.update()
+                        elif event.unicode.isalpha():
+                            self.saving_name_tracker.update(event.unicode)
+                        elif event.key == pygame.K_RETURN and len(self.saving_name_tracker.text):
+                            self.save_level()
+                            self.to_pause_menu()
+                else:
+                    if event.type == pygame.QUIT:
+                        my_game.quit()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                        self.to_play()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.current_button_index is not None:
+                        self.buttons_callbacks[self.current_button_index]()
+                    elif event.type == pygame.KEYDOWN and (event.key == pygame.K_w or event.key == pygame.K_s):
+                        self.switch_button(event.key)
 
             clock.tick(15)
 

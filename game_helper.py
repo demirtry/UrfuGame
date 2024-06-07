@@ -1,6 +1,6 @@
 import pygame
 from game import Scene
-from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter
+from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter, TextTracker
 from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position
 from working_with_files import clear_directory, check_directory
 
@@ -150,7 +150,7 @@ class Helper:
         menu_y = 0
 
         menu_btn1 = Button(512 - 65, 150, 'arial', 'Играть', 50, (152, 13, 243), (206, 31, 107))
-        menu_btn2 = Button(512 - 102, 250, 'arial', 'Настройки', 50, (152, 13, 243), (206, 31, 107))
+        menu_btn2 = Button(512 - 282 // 2, 250, 'arial', 'Загрузить игру', 50, (152, 13, 243), (206, 31, 107))
         menu_btn3 = Button(512 - 61, 350, 'arial', 'Выйти', 50, (152, 13, 243), (206, 31, 107))
 
         menu_picture = pygame.image.load('images/backgrounds/menu_background2.png').convert()
@@ -162,14 +162,44 @@ class Helper:
         return menu_scene, buttons
 
     @staticmethod
+    def create_menu_level_loader_scene(saved_levels: dict):
+
+        saved_names = list(saved_levels.keys())
+
+        buttons = []
+        for i in range(len(saved_names)):
+            button_x = 512 - TextBoxCreator.create_text_img('arial', saved_names[i], 50, (152, 13, 243)).get_rect().size[0] // 2
+            buttons.append(Button(button_x, 190 + 75 * i, 'arial', saved_names[i], 50, (152, 13, 243), (206, 31, 107)))
+
+        menu_loader_picture = pygame.image.load('images/backgrounds/menu_background2.png').convert()
+        menu_loader_obj = VisibleObject(0, 0, [[menu_loader_picture]])
+
+        if len(saved_names):
+            loader_head_img = TextBoxCreator.create_text_img('arial', 'Выберите сохранение', 50, (12, 127, 145))
+
+        else:
+            loader_head_img = TextBoxCreator.create_text_img('arial', 'Сохранения не найдены', 50, (12, 127, 145))
+
+        loader_head_x = 512 - loader_head_img.get_rect().size[0] // 2
+        loader_head_obj = VisibleObject(loader_head_x, 110, [[loader_head_img]])
+
+        back_button_y = 190 + 75 * len(saved_names)
+        back_button = Button(512 - 119 // 2, back_button_y, 'arial', 'Назад', 50, (152, 13, 243),
+                             (206, 31, 107))
+
+        buttons.append(back_button)
+
+        level_loader_scene = Scene(Helper.screen, menu_loader_obj, loader_head_obj)
+        level_loader_scene.append_obj(*buttons)
+
+        return level_loader_scene, buttons
+
+    @staticmethod
     def turn_scene_to_pause(pause):
         new_scene = Scene(Helper.screen)
         for obj in pause.scene.obj_lst:
             new_scene.append_obj(obj)
         pause.update_scene(new_scene)
-
-        # pause_scene_img = pygame.image.load('images/backgrounds/game_over_bg.jpg').convert()
-        # pause_scene_obj = VisibleObject(0, 0, [[pause_scene_img]])
 
         pause_scene_img = pygame.image.load('images/backgrounds/pause.jpg').convert()
         pause_scene_obj = VisibleObject(128, 96, [[pause_scene_img]])
@@ -177,10 +207,99 @@ class Helper:
         pause_head_img = TextBoxCreator.create_text_img('arial', 'Игра на паузе', 50, (12, 127, 145))
         pause_head_obj = VisibleObject(512 - 266 // 2, 210, [[pause_head_img]])
         pause_btn1 = Button(512 - 237 // 2, 320, 'arial', 'Продолжить', 50, (152, 13, 243), (206, 31, 107))
-        pause_btn2 = Button(512 - 272 // 2, 425, 'arial', 'Выйти в меню', 50, (152, 13, 243), (206, 31, 107))
-        pause.scene.append_obj(pause_scene_obj, pause_head_obj, pause_btn1, pause_btn2)
+        pause_btn2 = Button(512 - 299 // 2, 415, 'arial', 'Сохранить игру', 50, (152, 13, 243), (206, 31, 107))
+        pause_btn3 = Button(512 - 272 // 2, 510, 'arial', 'Выйти в меню', 50, (152, 13, 243), (206, 31, 107))
+        pause.scene.append_obj(pause_scene_obj, pause_head_obj, pause_btn1, pause_btn2, pause_btn3)
+
         pause.buttons.append(pause_btn1)
         pause.buttons.append(pause_btn2)
+        pause.buttons.append(pause_btn3)
+
+    @staticmethod
+    def turn_scene_to_get_saving_name(scene: Scene):
+
+        new_scene = Scene(Helper.screen)
+        for obj in scene.obj_lst:
+            new_scene.append_obj(obj)
+
+        saving_bg_img = pygame.image.load('images/backgrounds/pause.jpg').convert()
+        saving_bg_obj = VisibleObject(128, 96, [[saving_bg_img]])
+
+        saving_name_head_img = TextBoxCreator.create_text_img('arial', 'Введите имя', 50, (12, 127, 145))
+        saving_name_head_obj = VisibleObject(512 - 245 // 2, 210, [[saving_name_head_img]])
+
+        saving_name_getter_img = pygame.image.load('images/backgrounds/saving_name_getter_bg.png').convert_alpha()
+        saving_name_getter_obj = VisibleObject(512 - 325 // 2, 295, [[saving_name_getter_img]])
+
+        new_scene.append_obj(saving_bg_obj, saving_name_head_obj, saving_name_getter_obj)
+
+        return new_scene
+
+    @staticmethod
+    def create_text_tracker_for_saving_name():
+        return TextTracker(400, 393, 45)
+
+    @staticmethod
+    def create_level_copy(level):
+        copied_scene = Scene(Helper.screen)
+        copied_player = Helper.create_player()
+        copied_player.current_animation_ind = level.player.current_animation_ind
+        copied_player.current_animation_lst_ind = level.player.current_animation_lst_ind
+        copied_player.x = level.player.x
+        copied_player.y = level.player.y
+        copied_player.turn = level.player.turn
+        copied_player.jump = level.player.jump
+        copied_player.fall = level.player.fall
+        copied_player.current_cnt_steps = level.player.current_cnt_steps
+        copied_player.jump_count = level.player.jump_count
+        copied_platforms = level.platforms.copy()
+        score_counter_bg, copied_score_counter = Helper.create_score_counter_objects()
+        copied_score_counter.update_score(level.score_counter.score)
+        copied_score_counter.update_image()
+
+        copied_scene.append_obj(Helper.create_level1_bg(), copied_player, score_counter_bg, copied_score_counter)
+        copied_scene.append_obj(*copied_platforms)
+
+        return copied_scene, copied_player, copied_score_counter, copied_platforms
+
+    @staticmethod
+    def copy_enemy(enemy):
+        new_enemy = Enemy(enemy.x, enemy.y, enemy.lst_of_animation_lst.copy())
+        new_enemy.animation_cnt = enemy.animation_cnt
+        new_enemy.current_animation_lst_ind = enemy.current_animation_lst_ind
+        new_enemy.current_bfs_index = enemy.current_bfs_index
+        new_enemy.current_action = enemy.current_action
+
+        return new_enemy
+
+    @staticmethod
+    def copy_fireball(fireball):
+        new_fireball = FireBall(fireball.x, fireball.y, fireball.lst_of_animation_lst.copy())
+        new_fireball.trajectory = fireball.trajectory
+        new_fireball.current_animation_ind = fireball.current_animation_ind
+
+        return new_fireball
+
+    @staticmethod
+    def copy_enemies_and_fireballs(new_level, old_level):
+
+        new_level.enemy_timer_count = old_level.enemy_timer_count
+        copied_enemies = []
+        copied_fireballs = []
+
+        for enemy in old_level.enemies:
+            copied_enemy = Helper.copy_enemy(enemy)
+            copied_enemies.append(copied_enemy)
+
+        for fireball in old_level.fireballs:
+            copied_fireball = Helper.copy_fireball(fireball)
+            copied_fireballs.append(copied_fireball)
+
+        new_level.enemies = copied_enemies
+        new_level.fireballs = copied_fireballs
+
+        new_level.scene.append_obj(*copied_enemies)
+        new_level.scene.append_obj(*copied_fireballs)
 
     @staticmethod
     def create_platform(platform_x, platform_y, size):
