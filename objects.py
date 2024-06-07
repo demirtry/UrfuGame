@@ -36,6 +36,30 @@ class VisibleObject(Object):
             self.current_animation_ind += 1
 
 
+class Scene:
+    def __init__(self, screen, *args):
+        self.screen = screen
+        self.obj_lst = [*args]
+
+    def append_obj(self, *new_objs):
+        for obj in new_objs:
+            self.obj_lst.append(obj)
+
+    def get_obj_lst(self):
+        return self.obj_lst
+
+    def draw_obj(self, pause: bool = False):
+        self.screen.fill((0, 0, 0))
+        for obj in self.obj_lst:
+            self.screen.blit(obj.get_current_animation(), obj.get_coordinates())
+            if not pause:
+                obj.change_animation_ind()
+        pygame.display.update()
+
+    def remove_obj(self, obj):
+        self.obj_lst.remove(obj)
+
+
 class Player(VisibleObject):
     def __init__(self, x: int, y: int, lst_of_animation_lst, jump_size: int = 9, speed: int = 8, cnt_steps_to_run: int = 20):
         super().__init__(x, y, lst_of_animation_lst)

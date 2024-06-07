@@ -1,95 +1,50 @@
 import pygame
+from level_types import Level
+from game_logic import GameplayLevel, Menu, Pause, GameOver
+from game_helper import Helper
+from objects import Scene, ScoreCounter
 
 
-class Scene:
-    def __init__(self, screen, *args):
-        self.screen = screen
-        self.obj_lst = [*args]
+class LevelCreator:
+    @staticmethod
+    def create_lvl1():
+        scene, player, score_counter, platforms = Helper.create_level1_objects()
+        return GameplayLevel(scene, player, score_counter, platforms)
 
-    def append_obj(self, *new_objs):
-        for obj in new_objs:
-            self.obj_lst.append(obj)
+    @staticmethod
+    def create_menu_lvl():
+        menu_scene, menu_buttons = Helper.create_menu_scene()
+        return Menu(menu_scene, menu_buttons)
 
-    def get_obj_lst(self):
-        return self.obj_lst
+    @staticmethod
+    def create_pause_lvl(scene: Scene):
+        return Pause(scene)
 
-    def draw_obj(self, pause: bool = False):
-        self.screen.fill((0, 0, 0))
-        for obj in self.obj_lst:
-            self.screen.blit(obj.get_current_animation(), obj.get_coordinates())
-            if not pause:
-                obj.change_animation_ind()
-        pygame.display.update()
-
-    def remove_obj(self, obj):
-        self.obj_lst.remove(obj)
-
-
-class Level:
-    def __init__(self, scene: Scene):
-        self.scene = scene
-        self.collisions = []
-        self._level_running = True
-
-    def make_collisions(self):
-        self.collisions = []
-        for obj in self.scene.get_obj_lst():
-            self.collisions.append(obj.get_current_animation().get_rect())
-
-    def get_level_running(self):
-        return self._level_running
-
-    def switch_level_running(self):
-        self._level_running = not self._level_running
-
-    def update_scene(self, scene: Scene):
-        self.scene = scene
-
-
-class LevelWithButtons(Level):
-    def __init__(self, scene: Scene):
-        super().__init__(scene)
-        self.last_element_index_before_pause = len(self.scene.get_obj_lst()) - 1
-        self.buttons = []
-        self.current_button_index = None
-        self.buttons_callbacks = []
-
-    def switch_button(self, key):
-        if key == pygame.K_w:
-            self.button_up()
-        else:
-            self.button_down()
-
-    def button_up(self):
-        if self.current_button_index is None:
-            self.current_button_index = 0
-        else:
-            self.current_button_index = max(0, self.current_button_index - 1)
-        for button in self.buttons:
-            button.to_base_condition()
-        self.buttons[self.current_button_index].select()
-
-    def button_down(self):
-        if self.current_button_index is None:
-            self.current_button_index = len(self.buttons) - 1
-        else:
-            self.current_button_index = min(len(self.buttons) - 1, self.current_button_index + 1)
-        self.to_start()
-        self.buttons[self.current_button_index].select()
-
-    def to_start(self):
-        for button in self.buttons:
-            button.to_base_condition()
+    @staticmethod
+    def create_game_over_lvl(score_counter: ScoreCounter, record_status):
+        game_over_scene, game_over_buttons = Helper.create_game_over_objects(score_counter, record_status)
+        return GameOver(game_over_scene, game_over_buttons)
 
 
 class Game:
-    def __init__(self, current_level, screen):
+    def __init__(self):
+        self.clock = pygame.time.Clock()
         self.game_running = True
-        self.current_level = current_level
-        self.screen = screen
+        self.current_level = LevelCreator.create_menu_lvl()
+        self.screen = pygame.display.set_mode((1024, 768))
         self.paused_level = None
         self.score_record = 0
         self.saved_levels = {}
+        self.commands_dict = {
+            'to_play': self.to_play,
+            'to_play_from_pause': self.to_play_from_pause,
+            'to_menu': self.to_menu,
+            'to_pause': self.to_pause,
+            'get_load_level_name': self.get_load_level_name,
+            'save_level': self.save_level,
+            'game_over': self.game_over,
+            'get_saving_name': self.get_saving_name
+        }
 
     def draw(self, pause: bool = False):
         self.current_level.scene.draw_obj(pause)
@@ -97,11 +52,64 @@ class Game:
     def switch_running(self):
         self.game_running = not self.game_running
 
+    def get_running_current_level(self):
+        self.current_level.get_level_running()
+
     def switch_current_level(self, level: Level | None = None):
         self.current_level = level
         if level is not None:
             if not self.current_level.get_level_running():
                 self.current_level.switch_level_running()
+
+    def run(self):
+        current_command = self.current_level.run()
+        if current_command is None:
+            self.switch_running()
+        elif not current_command.startswith('load'):
+            self.commands_dict[current_command]()
+        else:
+            self.load_level(current_command.split(':')[1])
+
+    def to_play(self):
+        self.switch_current_level(LevelCreator.create_lvl1())
+
+    def to_play_from_pause(self):
+        self.switch_current_level(self.paused_level)
+        self.paused_level = None
+
+    def to_menu(self):
+        self.switch_current_level(LevelCreator.create_menu_lvl())
+
+    def to_pause(self):
+        self.paused_level = self.current_level
+        self.switch_current_level(LevelCreator.create_pause_lvl(self.current_level.scene))
+
+    def get_load_level_name(self):
+        self.current_level.scene, self.current_level.buttons = Helper.create_menu_level_loader_scene(self.saved_levels)
+        self.current_level.is_loading = True
+
+    def load_level(self, level_name: str):
+        level_to_load = self.saved_levels[level_name]
+
+        scene, player, score_counter, platforms = Helper.create_level_copy(level_to_load)
+        copied_level_to_load = GameplayLevel(scene, player, score_counter, platforms)
+        Helper.copy_enemies_and_fireballs(copied_level_to_load, level_to_load)
+
+        self.switch_current_level(copied_level_to_load)
+
+    def game_over(self):
+        record_status = self.update_score_record(self.current_level.score_counter.score)
+        new_level = LevelCreator.create_game_over_lvl(self.current_level.score_counter, record_status)
+        self.switch_current_level(new_level)
+
+    def save_level(self):
+        scene, player, score_counter, platforms = Helper.create_level_copy(self.paused_level)
+        saved_level = GameplayLevel(scene, player, score_counter, platforms)
+        Helper.copy_enemies_and_fireballs(saved_level, self.paused_level)
+        self.saved_levels.update({self.current_level.saving_name_tracker.text: saved_level})
+
+    def get_saving_name(self):
+        self.current_level.get_saving_name()
 
     def quit(self):
         self.current_level.switch_level_running()
