@@ -1,6 +1,6 @@
 import pygame
-from game import Scene
-from objects import Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter, TextTracker
+# from game import Scene
+from objects import Scene, Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter, TextTracker
 from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position
 from working_with_files import clear_directory, check_directory
 
