@@ -200,8 +200,9 @@ class Enemy(VisibleObject):
 
 class Button(VisibleObject):
     def __init__(self, x, y, font_name, text, text_size, base_color, current_color):
-        base_btn_img = TextBoxCreator.create_text_img(font_name, text, text_size, base_color)
-        current_btn_img = TextBoxCreator.create_text_img(font_name, text, text_size, current_color)
+        self.text = text
+        base_btn_img = TextBoxCreator.create_text_img(font_name, self.text, text_size, base_color)
+        current_btn_img = TextBoxCreator.create_text_img(font_name, self.text, text_size, current_color)
         super().__init__(x, y, [[base_btn_img], [current_btn_img]])
         self.current = False
 
@@ -223,8 +224,11 @@ class ScoreCounter(VisibleObject):
     def update_text(self):
         return f'Score:  {self.score}'
 
-    def update_score(self):
-        self.score += 10
+    def update_score(self, new_score=None):
+        if new_score is None:
+            self.score += 10
+        else:
+            self.score = new_score
 
     def update_image(self):
 
@@ -241,6 +245,32 @@ class ScoreCounter(VisibleObject):
         self.update_image()
 
 
+class TextTracker(VisibleObject):
+    def __init__(self, x, y, text_size):
+        self.text = ''
+        self.text_size = text_size
+        self.update_img()
+        super().__init__(x, y, self.lst_of_animation_lst)
+
+    def update_img(self):
+        updated_img = TextBoxCreator.create_text_img('arial', self.text, self.text_size, (0, 0, 0))
+        self.lst_of_animation_lst = [[updated_img]]
+
+    def update(self, symbol=None):
+        if symbol is None:
+            self.text = self.text[:-1]
+        else:
+            self.text += symbol
+
+        self.update_img()
+        self.check_text_length()
+
+    def check_text_length(self):
+        if self.lst_of_animation_lst[0][0].get_rect().size[0] > 225:
+            self.text = self.text[:-1]
+            self.update_img()
+
+
 class Platform(VisibleObject):
     def __init__(self, x, y, lst_of_animation_lst):
         super().__init__(x, y, lst_of_animation_lst)
@@ -251,10 +281,13 @@ class Platform(VisibleObject):
 
 
 class FireBall(VisibleObject):
-    def __init__(self, x, y, lst_of_animation_lst, mouse_position, speed: int = 10):
+    def __init__(self, x, y, lst_of_animation_lst, mouse_position=None, speed: int = 10):
         super().__init__(x, y, lst_of_animation_lst)
         self.speed = speed
-        self.trajectory = trajectory_calculate(self.get_coordinates(), mouse_position, self.speed)
+        self.mouse_position = mouse_position
+        self.trajectory = None
+        if mouse_position is not None:
+            self.trajectory = trajectory_calculate(self.get_coordinates(), self.mouse_position, self.speed)
 
     def move(self):
         self.x += self.trajectory[0]

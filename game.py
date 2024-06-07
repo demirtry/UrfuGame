@@ -89,6 +89,7 @@ class Game:
         self.screen = screen
         self.paused_level = None
         self.score_record = 0
+        self.saved_levels = {}
 
     def draw(self, pause: bool = False):
         self.current_level.scene.draw_obj(pause)
