@@ -92,15 +92,16 @@ class Player(VisibleObject):
         self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
         self.current_animation_ind = min(self.current_animation_ind, self.max_animation_cnt - 1)
 
-        if self.x < 1024 - 9 - 32 - self.speed and not collide_status:
+        if not collide_status:
 
             if self.current_animation_lst_ind == 3:
                 self.x += self.speed
                 self.current_cnt_steps -= 1
             else:
                 self.x += self.speed + 4
-        else:
 
+            self.x = min(self.x, 1024 - 9 - 32)
+        else:
             self.current_cnt_steps = self.cnt_steps_to_run
 
     def move_left(self, collide_status):
@@ -121,15 +122,16 @@ class Player(VisibleObject):
         self.max_animation_cnt = len(self.lst_of_animation_lst[self.current_animation_lst_ind])
         self.current_animation_ind = min(self.current_animation_ind, self.max_animation_cnt - 1)
 
-        if self.x > self.speed - 9 and not collide_status:
+        if not collide_status:
 
             if self.current_animation_lst_ind == 2:
                 self.x -= self.speed
                 self.current_cnt_steps -= 1
             else:
                 self.x -= self.speed + 4
-        else:
 
+            self.x = max(-9, self.x)
+        else:
             self.current_cnt_steps = self.cnt_steps_to_run
 
     def make_jump(self, collide_up):
@@ -319,7 +321,7 @@ class FireBall(VisibleObject):
 
     def check_position(self):
         position_status = True
-        if self.x < 0 or self.x > 1024 or self.y < 0 or self.y > 768:
+        if self.x < -5 or self.x > 1030 or self.y < 0 or self.y > 775:
             position_status = False
         return position_status
 

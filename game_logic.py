@@ -26,23 +26,21 @@ class GameplayLevel(Level):
         if self.player.current_animation_lst_ind in [4, 5]:
             current_speed += 4
 
-        if key == pygame.K_a or key == pygame.K_d:
+        if key == pygame.K_a:
+            self.player.x -= current_speed
+        else:
+            self.player.x += current_speed
 
-            if key == pygame.K_a:
-                self.player.x -= current_speed
-            else:
-                self.player.x += current_speed
+        player_rect = self.player.get_rect()
+        for platform in self.platforms:
+            if pygame.Rect.colliderect(player_rect, platform.get_rect()):
+                collide_status = True
+                break
 
-            player_rect = self.player.get_rect()
-            for platform in self.platforms:
-                if pygame.Rect.colliderect(player_rect, platform.get_rect()):
-                    collide_status = True
-                    break
-
-            if key == pygame.K_a:
-                self.player.x += current_speed
-            else:
-                self.player.x -= current_speed
+        if key == pygame.K_a:
+            self.player.x += current_speed
+        else:
+            self.player.x -= current_speed
 
         return collide_status
 
@@ -219,7 +217,7 @@ class Menu(LevelWithButtons):
                     if self.is_loading:
 
                         if self.current_button_index == len(self.buttons) - 1:
-                            return 'to menu'
+                            return 'to_menu'
                         else:
                             return f'load:{self.buttons[self.current_button_index].text}'
 

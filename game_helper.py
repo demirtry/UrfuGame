@@ -1,5 +1,4 @@
 import pygame
-# from game import Scene
 from objects import Scene, Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter, TextTracker
 from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position
 from working_with_files import clear_directory, check_directory
@@ -126,14 +125,31 @@ class Helper:
         #     Helper.create_platform(384, 720, 1),
         # ]
 
+        # platforms = [
+        #     Helper.create_ground_platform(),
+        #     Helper.create_platform(96, 648, 5),
+        #     Helper.create_platform(256, 552, 5),
+        #     Helper.create_platform(384, 432, 3),
+        #     Helper.create_platform(448, 312, 3),
+        #     Helper.create_platform(512, 216, 2),
+        #     Helper.create_platform(384, 168, 2),
+        # ]
+
         platforms = [
             Helper.create_ground_platform(),
             Helper.create_platform(96, 648, 5),
+            Helper.create_platform(0, 648 - 24*4, 2),
+            Helper.create_platform(32*3, 648 - 24*8, 3),
+            # Helper.create_platform(32*6, 648 - 24*12, 1),
             Helper.create_platform(256, 552, 5),
-            Helper.create_platform(384, 432, 3),
-            Helper.create_platform(448, 312, 3),
-            Helper.create_platform(512, 216, 2),
+            # Helper.create_platform(384, 432, 3),
+            Helper.create_platform(448 - 32 * 6, 312 - 24, 3),
+            Helper.create_platform(512 - 32*4, 216, 2),
             Helper.create_platform(384, 168, 2),
+            Helper.create_platform(1024-32*8, 648 - 24, 3),
+            Helper.create_platform(1024-32*12, 648 - 24 * 5, 2),
+            Helper.create_platform(32, 648 - 24 * 12, 2)
+
         ]
 
         score_bg_obj, score_counter = Helper.create_score_counter_objects()
@@ -146,7 +162,7 @@ class Helper:
 
     @staticmethod
     def create_menu_scene():
-        menu_x = 0
+        menu_x = -80
         menu_y = 0
 
         menu_btn1 = Button(512 - 65, 150, 'arial', 'Играть', 50, (152, 13, 243), (206, 31, 107))
@@ -172,7 +188,7 @@ class Helper:
             buttons.append(Button(button_x, 190 + 75 * i, 'arial', saved_names[i], 50, (152, 13, 243), (206, 31, 107)))
 
         menu_loader_picture = pygame.image.load('images/backgrounds/menu_background2.png').convert()
-        menu_loader_obj = VisibleObject(0, 0, [[menu_loader_picture]])
+        menu_loader_obj = VisibleObject(-80, 0, [[menu_loader_picture]])
 
         if len(saved_names):
             loader_head_img = TextBoxCreator.create_text_img('arial', 'Выберите сохранение', 50, (12, 127, 145))
@@ -350,8 +366,8 @@ class Helper:
     def create_fireball(player: Player):
 
         start_coordinates = player.get_coordinates()
-        fireball_coordinates = (start_coordinates[0], start_coordinates[1] + 24)
-        degree_coordinates = (start_coordinates[0] + 25, start_coordinates[1] + 35)
+        fireball_coordinates = (start_coordinates[0]+9, start_coordinates[1] + 24)
+        degree_coordinates = (start_coordinates[0] + 25 + 9, start_coordinates[1] + 35)
 
         mouse_position = pygame.mouse.get_pos()
         degree = degree_calculation(degree_coordinates, mouse_position)
