@@ -139,3 +139,44 @@ def generate_enemy_position(tiles, player):
     enemy_y = selected_tile_row_index * 24 - 24
 
     return enemy_x, enemy_y, enemy_turn
+
+
+def generate_enemy_level(score):
+
+    possible_levels = [1, 2, 3]
+
+    level1_weight = max(1 - (score / 700), 0)
+    level2_weight = max(1 - level1_weight - (score / 1400), 0)
+    level3_weight = max(1 - level1_weight - level2_weight - (score / 2100), 0)
+
+    summary_weights = level1_weight + level2_weight + level3_weight
+    if summary_weights == 3:
+        return 1
+
+    if not summary_weights:
+        return 3
+
+    final_level1_weight = round(level1_weight / summary_weights, 2)
+    final_level2_weight = round(level2_weight / summary_weights, 2)
+    final_level3_weight = round(level3_weight / summary_weights, 2)
+
+    weights = [final_level1_weight, final_level2_weight, final_level3_weight]
+
+    enemy_level = random.choices(possible_levels, weights=weights)[0]
+
+    return enemy_level
+
+
+def get_stats_for_enemy_level(enemy_level: int):
+
+    if enemy_level == 1:
+        return 50, 10, 8, 4, 3
+
+    if enemy_level == 2:
+        mutation = random.randint(0, 1)
+        if mutation:
+            return 100, 20, 8, 4, 3
+        return 50, 20, 4, 8, 6
+
+    if enemy_level == 3:
+        return 100, 30, 4, 8, 6

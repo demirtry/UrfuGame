@@ -1,6 +1,6 @@
 import pygame
 from objects import Scene, Player, VisibleObject, Button, TextBoxCreator, Enemy, FireBall, Platform, ScoreCounter, TextTracker
-from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position
+from mathematical_funcs import img_multiplication, degree_calculation, img_rotation, generate_enemy_position, generate_enemy_level
 from working_with_files import clear_directory, check_directory
 
 
@@ -113,36 +113,12 @@ class Helper:
         if player is None:
             player = Helper.create_player()
 
-        # platforms = [
-        #     Helper.create_platform(96, 648, 5),
-        #     Helper.create_platform(256, 552, 5),
-        #     Helper.create_platform(384, 432, 3),
-        #     Helper.create_ground_platform(),
-        #     Helper.create_platform(96, 720, 1),
-        #     Helper.create_platform(96, 696, 1),
-        #     Helper.create_platform(96, 672, 1),
-        #     Helper.create_platform(320, 720, 1),
-        #     Helper.create_platform(384, 720, 1),
-        # ]
-
-        # platforms = [
-        #     Helper.create_ground_platform(),
-        #     Helper.create_platform(96, 648, 5),
-        #     Helper.create_platform(256, 552, 5),
-        #     Helper.create_platform(384, 432, 3),
-        #     Helper.create_platform(448, 312, 3),
-        #     Helper.create_platform(512, 216, 2),
-        #     Helper.create_platform(384, 168, 2),
-        # ]
-
         platforms = [
             Helper.create_ground_platform(),
             Helper.create_platform(96, 648, 5),
             Helper.create_platform(0, 648 - 24*4, 2),
             Helper.create_platform(32*3, 648 - 24*8, 3),
-            # Helper.create_platform(32*6, 648 - 24*12, 1),
             Helper.create_platform(256, 552, 5),
-            # Helper.create_platform(384, 432, 3),
             Helper.create_platform(448 - 32 * 6, 312 - 24, 3),
             Helper.create_platform(512 - 32*4, 216, 2),
             Helper.create_platform(384, 168, 2),
@@ -270,8 +246,7 @@ class Helper:
         copied_player.jump_count = level.player.jump_count
         copied_platforms = level.platforms.copy()
         score_counter_bg, copied_score_counter = Helper.create_score_counter_objects()
-        copied_score_counter.update_score(level.score_counter.score)
-        copied_score_counter.update_image()
+        copied_score_counter.update_stats(final_score=level.score_counter.score)
 
         copied_scene.append_obj(Helper.create_level1_bg(), copied_player, score_counter_bg, copied_score_counter)
         copied_scene.append_obj(*copied_platforms)
@@ -280,7 +255,7 @@ class Helper:
 
     @staticmethod
     def copy_enemy(enemy):
-        new_enemy = Enemy(enemy.x, enemy.y, enemy.lst_of_animation_lst.copy())
+        new_enemy = Enemy(enemy.x, enemy.y, enemy.lst_of_animation_lst.copy(), enemy.enemy_level)
         new_enemy.animation_cnt = enemy.animation_cnt
         new_enemy.current_animation_lst_ind = enemy.current_animation_lst_ind
         new_enemy.current_bfs_index = enemy.current_bfs_index
@@ -299,7 +274,8 @@ class Helper:
     @staticmethod
     def copy_enemies_and_fireballs(new_level, old_level):
 
-        new_level.enemy_timer_count = old_level.enemy_timer_count
+        Helper.copy_enemy_timer_helper(new_level.enemy_timer_helper, old_level.enemy_timer_helper)
+
         copied_enemies = []
         copied_fireballs = []
 
@@ -318,6 +294,13 @@ class Helper:
         new_level.scene.append_obj(*copied_fireballs)
 
     @staticmethod
+    def copy_enemy_timer_helper(new_enemy_timer, old_enemy_timer):
+        new_enemy_timer.spawned_enemies = old_enemy_timer.spawned_enemies
+        new_enemy_timer.score_last_reload = old_enemy_timer.score_last_reload
+        new_enemy_timer.reload_count = old_enemy_timer.reload_count
+        new_enemy_timer.timer_step = old_enemy_timer.timer_step
+
+    @staticmethod
     def create_platform(platform_x, platform_y, size):
         check_directory()
         base_platform_path = 'images/jungle_platform.png'
@@ -333,32 +316,34 @@ class Helper:
         return Helper.create_platform(0, 744, 32)
 
     @staticmethod
-    def create_enemy(tiles, player):
+    def create_enemy(tiles, player, score):
+
+        enemy_level = generate_enemy_level(score)
 
         enemy_walk_left = [
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_3.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_2.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_-1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_0.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_-1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_left/enemy_walk_left_2.png').convert_alpha()
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_3.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_2.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_-1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_0.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_-1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_left/enemy_walk_left_2.png').convert_alpha()
         ]
 
         enemy_walk_right = [
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_3.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_2.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_-1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_0.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_-1.png').convert_alpha(),
-            pygame.image.load('images/enemy_images/walk/walk_right/enemy_walk_right_2.png').convert_alpha()
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_3.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_2.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_-1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_0.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_-1.png').convert_alpha(),
+            pygame.image.load(f'images/enemy_images/level{enemy_level}/walk_right/enemy_walk_right_2.png').convert_alpha()
         ]
 
         enemy_x, enemy_y, enemy_turn = generate_enemy_position(tiles, player)
-        enemy = Enemy(enemy_x, enemy_y, [enemy_walk_left, enemy_walk_right], enemy_turn)
+        enemy = Enemy(enemy_x, enemy_y, [enemy_walk_left, enemy_walk_right], enemy_level, enemy_turn)
 
         return enemy
 
