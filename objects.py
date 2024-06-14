@@ -1,5 +1,5 @@
 import pygame
-from mathematical_funcs import trajectory_calculate
+from mathematical_funcs import trajectory_calculate, get_stats_for_enemy_level
 
 
 class Object:
@@ -181,12 +181,12 @@ class Player(VisibleObject):
 
 
 class Enemy(VisibleObject):
-    def __init__(self, x, y, lst_of_animation_lst: list[...], turn: bool = False, x_speed: int = 4, y_speed: int = 3):
+    def __init__(self, x, y, lst_of_animation_lst: list[...], enemy_level: int, turn: bool = False):
         super().__init__(x, y, lst_of_animation_lst)
         self.animation_cnt = 0
         self.max_animation_cnt = len(lst_of_animation_lst[self.current_animation_lst_ind])
-        self.x_speed = x_speed
-        self.y_speed = y_speed
+        self.enemy_level = enemy_level
+        self.health, self.reward, self.bfs_cooldown, self.x_speed, self.y_speed = get_stats_for_enemy_level(self.enemy_level)
         self.current_bfs_index = 0
         self.current_action = None
         if turn:
@@ -250,11 +250,11 @@ class ScoreCounter(VisibleObject):
     def update_text(self):
         return f'Score:  {self.score}'
 
-    def update_score(self, new_score=None):
-        if new_score is None:
-            self.score += 10
+    def update_score(self, enemy_reward, final_score):
+        if final_score is None and enemy_reward is not None:
+            self.score += enemy_reward
         else:
-            self.score = new_score
+            self.score = final_score
 
     def update_image(self):
 
@@ -266,8 +266,8 @@ class ScoreCounter(VisibleObject):
         updated_img = TextBoxCreator.create_text_img('arial', self.update_text(), 35, (31, 87, 161))
         self.lst_of_animation_lst = [[updated_img]]
 
-    def calculate(self):
-        self.update_score()
+    def update_stats(self, enemy_reward=None, final_score=None):
+        self.update_score(enemy_reward, final_score)
         self.update_image()
 
 
@@ -309,6 +309,7 @@ class Platform(VisibleObject):
 class FireBall(VisibleObject):
     def __init__(self, x, y, lst_of_animation_lst, mouse_position=None, speed: int = 10):
         super().__init__(x, y, lst_of_animation_lst)
+        self.damage = 50
         self.speed = speed
         self.mouse_position = mouse_position
         self.trajectory = None
@@ -342,3 +343,23 @@ class TextBoxCreator:
         font = pygame.font.SysFont(font_name, text_size)
         text_img = font.render(text, True, color)
         return text_img
+
+
+class EnemyTimerHelper:
+    def __init__(self):
+        self.spawned_enemies = 0
+        self.reload_count = 0
+        self.timer_step = 30
+        self.score_last_reload = 0
+
+    def get_current_timing(self, score):
+
+        self.spawned_enemies += 1
+
+        if score - self.score_last_reload > 300:
+            self.spawned_enemies = 0
+            self.timer_step += 15
+            self.score_last_reload = score
+            self.reload_count += 1
+
+        return max(3000 - self.reload_count * 100 - self.spawned_enemies * self.timer_step, 1050)
