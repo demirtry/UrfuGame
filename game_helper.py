@@ -20,10 +20,6 @@ class Helper:
     @staticmethod
     def create_player():
 
-        # base_player_x = 503
-        # base_player_y = 674
-
-        # player between platforms
         base_player_x = 320 + 32 - 9
         base_player_y = 720 + 24 - 70
 
@@ -120,10 +116,17 @@ class Helper:
             Helper.create_platform(32*3, 648 - 24*8, 3),
             Helper.create_platform(256, 552, 5),
             Helper.create_platform(448 - 32 * 6, 312 - 24, 3),
-            Helper.create_platform(512 - 32*4, 216, 2),
-            Helper.create_platform(384, 168, 2),
+            Helper.create_platform(512 - 32*4, 216 - 24*2, 2),
+            Helper.create_platform(0, 168 + 24 * 1, 2),
+            Helper.create_platform(32*7, 168 - 24 * 1, 2),
             Helper.create_platform(1024-32*8, 648 - 24, 3),
             Helper.create_platform(1024-32*12, 648 - 24 * 5, 2),
+            Helper.create_platform(1024-32*8, 648 - 24 * 8, 5),
+            Helper.create_platform(1024-32*15, 648 - 24 * 13, 3),
+            Helper.create_platform(32*14, 648 - 24 * 9, 1),
+            Helper.create_platform(32*21, 648 - 24 * 18, 3),
+            Helper.create_platform(32*26, 648 - 24 * 17, 2),
+            Helper.create_platform(1024 - 32*2, 648 - 24 * 13, 2),
             Helper.create_platform(32, 648 - 24 * 12, 2)
 
         ]
