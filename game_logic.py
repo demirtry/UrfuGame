@@ -16,6 +16,7 @@ class GameplayLevel(Level):
         self.pause = False
         self.bfs = BreadthFirstSearch(self.platforms)
         self.enemy_timer_helper = EnemyTimerHelper()
+        self.can_shoot = True
 
     def collide(self, key):
         collide_status = False
@@ -142,7 +143,6 @@ class GameplayLevel(Level):
             if not enemy.current_bfs_index:
                 current_enemy_action = self.bfs.find_way(enemy.get_current_tile(), self.player.get_current_tile())
                 enemy.current_action = current_enemy_action
-                # enemy.current_bfs_index = self.bfs_cooldown
                 enemy.current_bfs_index = enemy.bfs_cooldown
             enemy.move(enemy.current_action)
             enemy.current_bfs_index -= 1
@@ -155,7 +155,9 @@ class GameplayLevel(Level):
     def run(self):
 
         enemy_timer = pygame.USEREVENT + 1
+        shoot_timer = pygame.USEREVENT + 2
         pygame.time.set_timer(enemy_timer, self.enemy_timer_helper.get_current_timing(self.score_counter.score))
+        pygame.time.set_timer(shoot_timer, 200)
 
         while True:
             self.scene.draw_obj(self.pause)
@@ -166,8 +168,13 @@ class GameplayLevel(Level):
                     return 'to_menu'
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
                     return 'to_pause'
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.can_shoot:
+                    pygame.time.set_timer(shoot_timer, 200)
+                    self.can_shoot = False
                     self.shoot()
+
+                if event.type == shoot_timer:
+                    self.can_shoot = True
 
                 if event.type == enemy_timer:
                     self.spawn_enemy()
